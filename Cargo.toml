@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 bevy = "0.4"
+bevy_mod_picking = "0.3.3"
 rand = "0.8"

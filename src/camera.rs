@@ -147,12 +147,10 @@ impl Plugin for StrategyCameraPlugin {
         )
         .add_system(strategy_camera_rig_movement.system())
         .add_system(strategy_camera.system())
-        .add_system(strategy_camera_follow.system());
+        .add_system(strategy_camera_follow.system())
+        .add_system(debug_camera_pos.system());
     }
 }
-
-/// When attached to a entity the strategy camera will follow that entitiy
-pub struct StrategyCameraFollow;
 
 #[derive(Default)]
 struct MouseWheelEventReader(EventReader<MouseWheel>);
@@ -265,11 +263,36 @@ fn strategy_camera(
     }
 }
 
+/// When attached to a entity the strategy camera will follow that entitiy
+pub struct StrategyCameraFollow(pub bool);
+
 fn strategy_camera_follow(
-    query_self: Query<&mut Transform, With<StrategyCamera>>,
-    mut query_follow: Query<&mut Transform, (With<StrategyCameraFollow>, Changed<Transform>)>
+    time: Res<Time>,
+    mut query_self: Query<&mut Transform, With<StrategyCameraRig>>,
+    query_follow: Query<(&Transform, &StrategyCameraFollow), Changed<Transform>>
 ) {
-    for _qf in query_follow.iter_mut() {
-        todo!("Make the camera follow any Entitiy with StrategyCameraFollow component")
+    for (follow_transform, follow) in query_follow.iter() {
+        if follow.0 {
+            for mut transform in query_self.iter_mut() {
+                if follow_transform.translation != transform.translation {
+                    // if follow_transform.translation.distance(transform.translation).abs() > 1. {
+                    //     transform.translation = transform.translation.lerp(follow_transform.translation, time.delta().as_micros() as f32 / 50000.);
+                    // } else {
+                        transform.translation = follow_transform.translation;
+                    // }
+                }
+            }
+        }
+    }
+}
+
+fn debug_camera_pos(
+    keyboard_input: Res<Input<KeyCode>>,
+    query: Query<(&Transform, &GlobalTransform), With<StrategyCamera>>,
+) {
+    for (t, g_t) in query.iter() {
+        if keyboard_input.pressed(KeyCode::Space) {
+            println!("g: {:?}, l: {:?}", g_t.translation, t.translation);
+        }
     }
 }
