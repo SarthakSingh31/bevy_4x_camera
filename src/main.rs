@@ -1,13 +1,17 @@
 use bevy::{prelude::*, render::camera::PerspectiveProjection};
+use bevy_mod_picking::{PickingPlugin, InteractablePickingPlugin, PickSource};
 
 mod board;
 mod camera;
 
 fn main() {
     App::build()
+        .add_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(board::BoardPlugin)
         .add_plugin(camera::StrategyCameraPlugin)
+        .add_plugin(PickingPlugin)
+        .add_plugin(InteractablePickingPlugin)
         .add_startup_system(dev_env.system())
         .run();
 }
@@ -33,6 +37,7 @@ fn dev_env(
                 transform: Transform::from_translation(Vec3::new(-20.0, 20., 0.0))
                     .looking_at(Vec3::zero(), Vec3::unit_y()),
                 ..Default::default()
-            });
+            })
+            .with(PickSource::default());
         });
 }

@@ -1,12 +1,15 @@
 use bevy::prelude::*;
+use bevy_mod_picking::{InteractableMesh, PickableMesh};
 use rand::prelude::*;
+use crate::camera::CameraRigFollow;
 
 pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(board.system())
-            .add_system(moving_car.system());
+            .add_system(moving_car.system())
+            .add_system(selectable_car.system());
     }
 }
 
@@ -56,10 +59,14 @@ fn board(
             mesh: meshes.add(Mesh::from(shape::Cube { size: 0.5 })),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             ..Default::default()
-        }).with(MovingCar {
+        })
+        .with(MovingCar {
             direction: Vec3::unit_x(),
             speed: 1.,
-        });
+        })
+        .with(CameraRigFollow(false))
+        .with(PickableMesh::default())
+        .with(InteractableMesh::default());
 }
 
 struct MovingCar {
@@ -74,5 +81,13 @@ fn moving_car(time: Res<Time>, mut query: Query<(&mut Transform, &mut MovingCar)
         }
 
         transform.translation += car.direction * (car.speed * time.delta().as_micros() as f32 / 1000000.);
+    }
+}
+
+fn selectable_car(mut query: Query<(&InteractableMesh, &mut CameraRigFollow)>) {
+    for (interactable, mut follow) in query.iter_mut() {
+        if let Ok(bevy_mod_picking::MouseDownEvents::MouseJustPressed) = interactable.mouse_down_event(&Default::default(), MouseButton::Left) {
+            follow.0 = true;
+        }
     }
 }
