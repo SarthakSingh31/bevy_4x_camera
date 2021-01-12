@@ -209,9 +209,9 @@ fn camera_rig_movement(
     }
 }
 
-pub struct StrategyCameraPlugin;
+pub struct FourXCameraPlugin;
 
-impl Plugin for StrategyCameraPlugin {
+impl Plugin for FourXCameraPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app
             .add_system(camera_rig_movement.system())

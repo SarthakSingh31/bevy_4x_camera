@@ -9,7 +9,7 @@ fn main() {
         .add_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(board::BoardPlugin)
-        .add_plugin(camera::StrategyCameraPlugin)
+        .add_plugin(camera::FourXCameraPlugin)
         .add_plugin(PickingPlugin)
         .add_plugin(InteractablePickingPlugin)
         .add_startup_system(dev_env.system())
