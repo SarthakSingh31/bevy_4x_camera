@@ -1,277 +1,216 @@
-use bevy::{input::{mouse::{MouseMotion, MouseWheel}}, prelude::*, render::{
-        camera::{
-            Camera,
-            camera_system,
-            CameraProjection,
-            DepthCalculation,
-            OrthographicProjection,
-            PerspectiveProjection,
-            VisibleEntities,
-        },
-        render_graph::base,
-    }};
+use bevy::{input::{mouse::{MouseMotion, MouseWheel}}, prelude::*, render::camera::Camera};
 
-#[derive(Debug, Clone)]
-pub enum Projection {
-    // TODO: Make Orthographic camera actually useful
-    Orthographic(OrthographicProjection),
-    Perspective(PerspectiveProjection),
+pub struct KeyboardConf {
+    forward: Box<[KeyCode]>,
+    backward: Box<[KeyCode]>,
+    left: Box<[KeyCode]>,
+    right: Box<[KeyCode]>,
+    /// sensitivity is calcualted by mx + c where (m: f32, c: f32)
+    /// and x is the camera distance 
+    move_sensitivity: (f32, f32),
+    clockwise: Box<[KeyCode]>,
+    counter_clockwise: Box<[KeyCode]>,
+    rotate_sensitivity: f32,
 }
 
-impl Default for Projection {
+impl Default for KeyboardConf {
     fn default() -> Self {
-        Projection::Perspective(PerspectiveProjection {
-            fov: 0.1,
-            ..Default::default()
-        })
+        KeyboardConf {
+            forward: Box::new([KeyCode::W, KeyCode::Up]),
+            backward: Box::new([KeyCode::S, KeyCode::Down]),
+            left: Box::new([KeyCode::A, KeyCode::Left]),
+            right: Box::new([KeyCode::D, KeyCode::Right]),
+            move_sensitivity: (2.0, 0.1),
+            clockwise: Box::new([KeyCode::Q]),
+            counter_clockwise: Box::new([KeyCode::E]),
+            rotate_sensitivity: std::f32::consts::PI / 100.,
+        }
     }
 }
 
-impl CameraProjection for Projection {
-    fn get_projection_matrix(&self) -> Mat4 {
-        match self {
-            Projection::Orthographic(p) => p.get_projection_matrix(),
-            Projection::Perspective(p) => p.get_projection_matrix(),
-        }
-    }
-    fn update(&mut self, width: f32, height: f32) {
-        match self {
-            Projection::Orthographic(p) => p.update(width, height),
-            Projection::Perspective(p) => p.update(width, height),
-        }
-    }
-    fn depth_calculation(&self) -> DepthCalculation {
-        match self {
-            Projection::Orthographic(p) => p.depth_calculation(),
-            Projection::Perspective(p) => p.depth_calculation(),
+pub struct MouseConf {
+    rotate: MouseButton,
+    rotate_sensitivity: f32,
+    drag: MouseButton,
+    /// sensitivity is calcualted by mx + c where (m: f32, c: f32)
+    /// and x is the camera distance 
+    drag_sensitivity: (f32, f32),
+    zoom_sensitivity: f32,
+}
+
+impl Default for MouseConf {
+    fn default() -> Self {
+        MouseConf {
+            rotate: MouseButton::Right,
+            rotate_sensitivity: std::f32::consts::PI / 1000.,
+            drag: MouseButton::Left,
+            drag_sensitivity: (1., std::f32::consts::PI / 1000.),
+            zoom_sensitivity: 5.,
         }
     }
 }
 
 /// TODO: Add the ability set more input type here like gamepad
-pub struct StrategyCamera {
-    pub mouse_rot: MouseButton,
-    pub mouse_rot_sensitivity: f32,
-    pub mouse_zoom_sensitiviy: f32,
-    pub transform: Option<Transform>,
-}
-
-impl Default for StrategyCamera {
-    fn default() -> Self {
-        StrategyCamera {
-            mouse_rot: MouseButton::Right,
-            mouse_rot_sensitivity: std::f32::consts::PI / 1000.,
-            mouse_zoom_sensitiviy: 5.,
-            transform: None,
-        }
-    }
-}
-
-/// A bundle to create a strategy camera
-#[derive(Bundle)]
-pub struct StrategyCameraBundle {
-    pub camera: Camera,
-    pub projection: Projection,
-    pub visible_entities: VisibleEntities,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
-    pub strategy_camera: StrategyCamera,
-}
-
-impl Default for StrategyCameraBundle {
-    fn default() -> Self {
-        StrategyCameraBundle {
-            camera: Camera {
-                name: Some(base::camera::CAMERA_3D.to_string()),
-                ..Default::default()
-            },
-            projection: Default::default(),
-            visible_entities: Default::default(),
-            transform: Default::default(),
-            global_transform: Default::default(),
-            strategy_camera: StrategyCamera::default(),
-        }
-    }
-}
-
-pub struct StrategyCameraRig {
-    pub move_forward: &'static [KeyCode],
-    pub move_backward: &'static [KeyCode],
-    pub move_left: &'static [KeyCode],
-    pub move_right: &'static [KeyCode],
-    pub move_sensitivity: f32,
-    pub rot_left: &'static [KeyCode],
-    pub rot_right: &'static [KeyCode],
-    pub rot_sensitivity: f32,
-    pub mouse_rot: MouseButton,
-    pub mouse_rot_sensitivity: f32,
-    pub mouse_drag: MouseButton,
-    pub mouse_drag_sensitivity: f32,
-    pub transform: Option<Transform>,
-}
-
-impl Default for StrategyCameraRig {
-    fn default() -> Self {
-        StrategyCameraRig {
-            move_forward: &[KeyCode::W, KeyCode::Up],
-            move_backward: &[KeyCode::S, KeyCode::Down],
-            move_left: &[KeyCode::A, KeyCode::Left],
-            move_right: &[KeyCode::D, KeyCode::Right],
-            move_sensitivity: 0.1,
-            rot_left: &[KeyCode::Q],
-            rot_right: &[KeyCode::E],
-            rot_sensitivity: std::f32::consts::PI / 100.,
-            mouse_rot: MouseButton::Right,
-            mouse_rot_sensitivity: std::f32::consts::PI / 1000.,
-            mouse_drag: MouseButton::Left,
-            mouse_drag_sensitivity: 0.01,
-            transform: None,
-        }
-    }
+#[derive(Default)]
+pub struct CameraRig {
+    pub keyboard: KeyboardConf,
+    pub mouse: MouseConf,
+    // Transforms for (Rig, Camera)
+    pub move_to: (Option<Transform>, Option<Transform>),
 }
 
 #[derive(Bundle, Default)]
-pub struct StrategyCameraRigBundle {
-    pub rig: StrategyCameraRig,
+pub struct CameraRigBundle {
+    pub camera_rig: CameraRig,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
+}
+
+#[derive(Default)]
+struct MouseEventReader {
+    motion: EventReader<MouseMotion>,
+    wheel: EventReader<MouseWheel>,
+}
+
+fn camera_rig_movement(
+    mut readers: Local<MouseEventReader>,
+    time: Res<Time>,
+    keyboard_input: Res<Input<KeyCode>>,
+    mouse_input: Res<Input<MouseButton>>,
+    mouse_motion_events: Res<Events<MouseMotion>>,
+    mouse_wheel_events: Res<Events<MouseWheel>>,
+    mut rig_query: Query<(&mut Transform, &mut CameraRig, &Children)>,
+    mut camera_query: Query<&mut Transform, With<Camera>>,
+) {
+    for (mut rig_transform, mut rig, children) in rig_query.iter_mut() {
+        let mut move_to_rig = if let Some(trans) = rig.move_to.0 {
+            trans
+        } else {
+            *rig_transform
+        };
+
+        let move_sensitivity = rig_transform.translation.y *
+            rig.keyboard.move_sensitivity.0 +
+            rig.keyboard.move_sensitivity.1;
+        // Rig Keyboard Movement
+        if rig.keyboard.forward.iter().any(|key| keyboard_input.pressed(*key)) {
+            move_to_rig.translation += rig_transform.rotation * Vec3::unit_x() * move_sensitivity;
+        }
+        if rig.keyboard.backward.iter().any(|key| keyboard_input.pressed(*key)) {
+            move_to_rig.translation -= rig_transform.rotation * Vec3::unit_x() * move_sensitivity;
+        }
+        if rig.keyboard.right.iter().any(|key| keyboard_input.pressed(*key)) {
+            move_to_rig.translation += rig_transform.rotation * Vec3::unit_z() * move_sensitivity;
+        }
+        if rig.keyboard.left.iter().any(|key| keyboard_input.pressed(*key)) {
+            move_to_rig.translation -= rig_transform.rotation * Vec3::unit_z() * move_sensitivity;
+        }
+        // Keyboard Rotation
+        if rig.keyboard.counter_clockwise.iter().any(|key| keyboard_input.pressed(*key)) {
+            move_to_rig.rotate(Quat::from_rotation_y(rig.keyboard.rotate_sensitivity));
+        }
+        if rig.keyboard.clockwise.iter().any(|key| keyboard_input.pressed(*key)) {
+            move_to_rig.rotate(Quat::from_rotation_y(- rig.keyboard.rotate_sensitivity));
+        }
+
+        // Rig Mouse Motion
+        let mut mouse_delta_y = 0.;
+        for event in readers.motion.iter(&mouse_motion_events) {
+            if mouse_input.pressed(rig.mouse.rotate) {
+                move_to_rig.rotate(Quat::from_rotation_y(- rig.mouse.rotate_sensitivity * event.delta.x));
+                mouse_delta_y += event.delta.y;
+            }
+            if mouse_input.pressed(rig.mouse.drag) {
+                let drag_sensitivity = rig_transform.translation.y *
+                    rig.mouse.drag_sensitivity.0 +
+                    rig.mouse.drag_sensitivity.1;
+                move_to_rig.translation += rig_transform.rotation * Vec3::new(event.delta.y, 0., - event.delta.x) * drag_sensitivity;
+            }
+        }
+
+        rig.move_to.0 = Some(move_to_rig);
+
+        // Smoothly move the rig
+        if move_to_rig.translation != rig_transform.translation {
+            if move_to_rig.translation.distance(rig_transform.translation).abs() > 0.005 {
+                rig_transform.translation = rig_transform.translation.lerp(move_to_rig.translation, time.delta().as_micros() as f32 / 100000.);
+            } else {
+                rig_transform.translation = move_to_rig.translation;
+            }
+        }
+        if move_to_rig.rotation != rig_transform.rotation {
+            if !move_to_rig.rotation.abs_diff_eq(rig_transform.rotation, 0.00001) {
+                rig_transform.rotation = rig_transform.rotation.lerp(move_to_rig.rotation, time.delta().as_micros() as f32 / 100000.);
+            } else {
+                rig_transform.rotation = move_to_rig.rotation;
+            }
+        }
+
+        let mut found_camera_child = false;
+        for child in children.iter() {
+            if let Ok(mut transform) = camera_query.get_mut(*child) {
+                let mut move_to_camera = if let Some(trans) = rig.move_to.1 {
+                    trans
+                } else {
+                    *transform
+                };
+
+                // Camera Mouse Zoom
+                for event in readers.wheel.iter(&mouse_wheel_events) {
+                    move_to_camera.translation -= move_to_camera.forward() * event.y * rig.mouse.zoom_sensitivity;
+                }
+
+                // Camera Mouse Rotate
+                if mouse_input.pressed(rig.mouse.rotate) {
+                    move_to_camera.rotate(Quat::from_rotation_x(-rig.mouse.rotate_sensitivity * mouse_delta_y));
+                    move_to_camera.translation = Quat::from_rotation_z(-rig.mouse.rotate_sensitivity * mouse_delta_y) * move_to_camera.translation;
+                }
+
+                rig.move_to.1 = Some(move_to_camera);
+
+                // Smoothly move the camera
+                if move_to_camera.translation != transform.translation {
+                    if move_to_camera.translation.distance(transform.translation).abs() > 0.005 {
+                        transform.translation = transform.translation.lerp(move_to_camera.translation, time.delta().as_micros() as f32 / 100000.);
+                    } else {
+                        transform.translation = move_to_camera.translation;
+                    }
+                }
+                if move_to_camera.rotation != transform.rotation {
+                    if !move_to_camera.rotation.abs_diff_eq(transform.rotation, 0.00001) {
+                        transform.rotation = transform.rotation.lerp(move_to_camera.rotation, time.delta().as_micros() as f32 / 100000.);
+                    } else {
+                        transform.rotation = move_to_camera.rotation;
+                    }
+                }
+
+                found_camera_child = true;
+                break
+            }
+        }
+
+        if !found_camera_child {
+            todo!("bevy diagnostics error here / should I panic here?");
+        }
+    }
 }
 
 pub struct StrategyCameraPlugin;
 
 impl Plugin for StrategyCameraPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system_to_stage(
-            stage::POST_UPDATE,
-            camera_system::<Projection>.system()
-        )
-        .add_system(strategy_camera_rig_movement.system())
-        .add_system(strategy_camera.system())
-        .add_system(strategy_camera_follow.system())
-        .add_system(debug_camera_pos.system());
+        app.add_system(camera_rig_movement.system())
+            .add_system(camera_rig_follow.system());
     }
 }
 
-#[derive(Default)]
-struct MouseWheelEventReader(EventReader<MouseWheel>);
-#[derive(Default)]
-struct MouseMotionEventReader(EventReader<MouseMotion>);
+pub struct CameraRigFollow(pub bool);
 
-fn strategy_camera_rig_movement(
-    mut reader: Local<MouseMotionEventReader>,
-    time: Res<Time>,
-    keyboard_input: Res<Input<KeyCode>>,
-    mouse_button: Res<Input<MouseButton>>,
-    events: Res<Events<MouseMotion>>,
-    mut query: Query<(&mut Transform, &mut StrategyCameraRig)>
+fn camera_rig_follow(
+    mut query_self: Query<&mut Transform, With<CameraRig>>,
+    mut query_follow: Query<(&mut Transform, &CameraRigFollow), Changed<Transform>>
 ) {
-    for (mut transform, mut rig_conf) in query.iter_mut() {
-        if rig_conf.transform == None {
-            rig_conf.transform = Some(transform.clone());
-        }
-        let mut new_transform = rig_conf.transform.unwrap();
-
-        if rig_conf.move_forward.iter().any(|key| keyboard_input.pressed(*key)) {
-            new_transform.translation += transform.rotation * Vec3::unit_x() * rig_conf.move_sensitivity;
-        }
-        if rig_conf.move_backward.iter().any(|key| keyboard_input.pressed(*key)) {
-            new_transform.translation -= transform.rotation * Vec3::unit_x() * rig_conf.move_sensitivity;
-        }
-        if rig_conf.move_right.iter().any(|key| keyboard_input.pressed(*key)) {
-            new_transform.translation += transform.rotation * Vec3::unit_z() * rig_conf.move_sensitivity;
-        }
-        if rig_conf.move_left.iter().any(|key| keyboard_input.pressed(*key)) {
-            new_transform.translation -= transform.rotation * Vec3::unit_z() * rig_conf.move_sensitivity;
-        }
-        if rig_conf.rot_right.iter().any(|key| keyboard_input.pressed(*key)) {
-            new_transform.rotate(Quat::from_rotation_y(- rig_conf.rot_sensitivity));
-        }
-        if rig_conf.rot_left.iter().any(|key| keyboard_input.pressed(*key)) {
-            new_transform.rotate(Quat::from_rotation_y(rig_conf.rot_sensitivity));
-        }
-
-        for event in reader.0.iter(&events) {
-            if mouse_button.pressed(rig_conf.mouse_rot) {
-                new_transform.rotate(Quat::from_rotation_y(- rig_conf.mouse_rot_sensitivity * event.delta.x));
-            }
-            if mouse_button.pressed(rig_conf.mouse_drag) {
-                new_transform.translation += transform.rotation * Vec3::new(event.delta.y, 0., - event.delta.x) * rig_conf.mouse_drag_sensitivity;
-            }
-        }
-
-        rig_conf.transform = Some(new_transform);
-
-        if new_transform.translation != transform.translation {
-            if new_transform.translation.distance(transform.translation).abs() > 0.005 {
-                transform.translation = transform.translation.lerp(new_transform.translation, time.delta().as_micros() as f32 / 100000.);
-            } else {
-                transform.translation = new_transform.translation;
-            }
-        }
-        if new_transform.rotation != transform.rotation {
-            if !new_transform.rotation.abs_diff_eq(transform.rotation, 0.00001) {
-                transform.rotation = transform.rotation.lerp(new_transform.rotation, time.delta().as_micros() as f32 / 100000.);
-            } else {
-                transform.rotation = new_transform.rotation;
-            }
-        }
-    }
-}
-
-fn strategy_camera(
-    mut readers: Local<(MouseMotionEventReader, MouseWheelEventReader)>,
-    time: Res<Time>,
-    mouse_button: Res<Input<MouseButton>>,
-    mouse_motion_events: Res<Events<MouseMotion>>,
-    mouse_wheel_events: Res<Events<MouseWheel>>,
-    mut query: Query<(&mut Transform, &mut StrategyCamera)>
-) {
-    for (mut transform, mut config) in query.iter_mut() {
-        if config.transform == None {
-            config.transform = Some(transform.clone());
-        }
-
-        let mut new_transform = config.transform.unwrap();
-
-        for event in readers.0.0.iter(&mouse_motion_events) {
-            if mouse_button.pressed(config.mouse_rot) {
-                new_transform.rotate(Quat::from_rotation_x(-config.mouse_rot_sensitivity * event.delta.y));
-                new_transform.translation = Quat::from_rotation_z(-config.mouse_rot_sensitivity * event.delta.y) * new_transform.translation;
-            }
-        }
-
-        for event in readers.1.0.iter(&mouse_wheel_events) {
-            new_transform.translation -= new_transform.forward() * event.y * config.mouse_zoom_sensitiviy;
-        }
-
-        config.transform = Some(new_transform);
-
-        if new_transform.translation != transform.translation {
-            if new_transform.translation.distance(transform.translation).abs() > 0.005 {
-                transform.translation = transform.translation.lerp(new_transform.translation, time.delta().as_micros() as f32 / 100000.);
-            } else {
-                transform.translation = new_transform.translation;
-            }
-        }
-        if new_transform.rotation != transform.rotation {
-            if !new_transform.rotation.abs_diff_eq(transform.rotation, 0.00001) {
-                transform.rotation = transform.rotation.lerp(new_transform.rotation, time.delta().as_micros() as f32 / 100000.);
-            } else {
-                transform.rotation = new_transform.rotation;
-            }
-        }
-    }
-}
-
-/// When attached to a entity the strategy camera will follow that entitiy
-pub struct StrategyCameraFollow(pub bool);
-
-fn strategy_camera_follow(
-    time: Res<Time>,
-    mut query_self: Query<&mut Transform, With<StrategyCameraRig>>,
-    query_follow: Query<(&Transform, &StrategyCameraFollow), Changed<Transform>>
-) {
-    for (follow_transform, follow) in query_follow.iter() {
+    for (follow_transform, follow) in query_follow.iter_mut() {
         if follow.0 {
             for mut transform in query_self.iter_mut() {
                 if follow_transform.translation != transform.translation {
@@ -282,17 +221,6 @@ fn strategy_camera_follow(
                     // }
                 }
             }
-        }
-    }
-}
-
-fn debug_camera_pos(
-    keyboard_input: Res<Input<KeyCode>>,
-    query: Query<(&Transform, &GlobalTransform), With<StrategyCamera>>,
-) {
-    for (t, g_t) in query.iter() {
-        if keyboard_input.pressed(KeyCode::Space) {
-            println!("g: {:?}, l: {:?}", g_t.translation, t.translation);
         }
     }
 }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_mod_picking::{InteractableMesh, PickableMesh};
 use rand::prelude::*;
-use crate::camera::StrategyCameraFollow;
+use crate::camera::CameraRigFollow;
 
 pub struct BoardPlugin;
 
@@ -64,7 +64,7 @@ fn board(
             direction: Vec3::unit_x(),
             speed: 1.,
         })
-        .with(StrategyCameraFollow(false))
+        .with(CameraRigFollow(false))
         .with(PickableMesh::default())
         .with(InteractableMesh::default());
 }
@@ -84,7 +84,7 @@ fn moving_car(time: Res<Time>, mut query: Query<(&mut Transform, &mut MovingCar)
     }
 }
 
-fn selectable_car(mut query: Query<(&InteractableMesh, &mut StrategyCameraFollow)>) {
+fn selectable_car(mut query: Query<(&InteractableMesh, &mut CameraRigFollow)>) {
     for (interactable, mut follow) in query.iter_mut() {
         if let Ok(bevy_mod_picking::MouseDownEvents::MouseJustPressed) = interactable.mouse_down_event(&Default::default(), MouseButton::Left) {
             println!("Got Click");
