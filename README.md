@@ -4,7 +4,7 @@ A 4X style camera for bevy. [Demo](https://imgur.com/XIIDcIW)
 
 Default Key Bindings:
 
-- W / A / S / D / Array Keys / Mouse Left - Move along the horizontal plane
+- W / A / S / D / Arrow Keys / Mouse Left - Move along the horizontal plane
 - Q / E / Mouse Right - Rotate around the center
 - Mouse Wheel - Zoom
 

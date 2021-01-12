@@ -1,11 +1,7 @@
 use bevy::{prelude::*, render::camera::PerspectiveProjection};
 use bevy_4x_camera::{CameraRigBundle, CameraRigFollow, FourXCameraPlugin};
 use bevy_mod_picking::{
-    PickableMesh,
-    PickingPlugin,
-    PickSource,
-    InteractableMesh,
-    InteractablePickingPlugin,
+    InteractableMesh, InteractablePickingPlugin, PickSource, PickableMesh, PickingPlugin,
 };
 use rand::prelude::*;
 
@@ -21,9 +17,7 @@ fn main() {
         .run();
 }
 
-fn camera_and_lights(
-    commands: &mut Commands
-) {
+fn camera_and_lights(commands: &mut Commands) {
     commands
         // light
         .spawn(LightBundle {
@@ -76,10 +70,9 @@ fn board(
         materials.add(Color::rgb(0.8, 0.8, 0.8).into()),
     ];
 
-    let points = (-25 ..= 25).filter(|i| i % 4 != 0);
+    let points = (-25..=25).filter(|i| i % 4 != 0);
     let points_clone = points.clone();
-    let points = points
-        .flat_map(move |i| points_clone.clone().map(move |j| (i, j)));
+    let points = points.flat_map(move |i| points_clone.clone().map(move |j| (i, j)));
 
     commands
         // plane
@@ -88,16 +81,15 @@ fn board(
             material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
             ..Default::default()
         })
-        .spawn_batch(points
-            .map(move |i| {
-                let mut rng = rand::thread_rng();
-                PbrBundle {
-                    mesh: cube_mesh_handles[rng.gen_range(0..4)].clone(),
-                    material: material_handles[rng.gen_range(0..5)].clone(),
-                    transform: Transform::from_translation(Vec3::new(i.0 as f32, 0.5, i.1 as f32)),
-                    ..Default::default()
-                }
-            }))
+        .spawn_batch(points.map(move |i| {
+            let mut rng = rand::thread_rng();
+            PbrBundle {
+                mesh: cube_mesh_handles[rng.gen_range(0..4)].clone(),
+                material: material_handles[rng.gen_range(0..5)].clone(),
+                transform: Transform::from_translation(Vec3::new(i.0 as f32, 0.5, i.1 as f32)),
+                ..Default::default()
+            }
+        }))
         .spawn(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 0.5 })),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
@@ -120,16 +112,19 @@ struct MovingCar {
 fn moving_car(time: Res<Time>, mut query: Query<(&mut Transform, &mut MovingCar)>) {
     for (mut transform, mut car) in query.iter_mut() {
         if transform.translation.dot(car.direction).abs() > 24. {
-            car.direction = - car.direction;
+            car.direction = -car.direction;
         }
 
-        transform.translation += car.direction * (car.speed * time.delta().as_micros() as f32 / 1000000.);
+        transform.translation +=
+            car.direction * (car.speed * time.delta().as_micros() as f32 / 1000000.);
     }
 }
 
 fn selectable_car(mut query: Query<(&InteractableMesh, &mut CameraRigFollow)>) {
     for (interactable, mut follow) in query.iter_mut() {
-        if let Ok(bevy_mod_picking::MouseDownEvents::MouseJustPressed) = interactable.mouse_down_event(&Default::default(), MouseButton::Left) {
+        if let Ok(bevy_mod_picking::MouseDownEvents::MouseJustPressed) =
+            interactable.mouse_down_event(&Default::default(), MouseButton::Left)
+        {
             follow.0 = true;
         }
     }
