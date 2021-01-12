@@ -209,16 +209,6 @@ fn camera_rig_movement(
     }
 }
 
-pub struct FourXCameraPlugin;
-
-impl Plugin for FourXCameraPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app
-            .add_system(camera_rig_movement.system())
-            .add_system(camera_rig_follow.system());
-    }
-}
-
 pub struct CameraRigFollow(pub bool);
 
 fn camera_rig_follow(
@@ -243,5 +233,15 @@ fn camera_rig_follow(
                 }
             }
         }
+    }
+}
+
+pub struct FourXCameraPlugin;
+
+impl Plugin for FourXCameraPlugin {
+    fn build(&self, app: &mut AppBuilder) {
+        app
+            .add_system(camera_rig_movement.system())
+            .add_system(camera_rig_follow.system());
     }
 }
