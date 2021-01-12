@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::camera::PerspectiveProjection};
 
 mod board;
 mod camera;
@@ -21,11 +21,15 @@ fn dev_env(
             transform: Transform::from_translation(Vec3::new(0.0, 50.0, 0.0)),
             ..Default::default()
         })
-        .spawn(camera::StrategyCameraRigBundle::default())
+        .spawn(camera::CameraRigBundle::default())
         // camera
         .with_children(|cb| {
             cb.spawn(
-                camera::StrategyCameraBundle {
+                Camera3dBundle {
+                perspective_projection: PerspectiveProjection {
+                    fov: 0.1,
+                    ..Default::default()
+                },
                 transform: Transform::from_translation(Vec3::new(-20.0, 20., 0.0))
                     .looking_at(Vec3::zero(), Vec3::unit_y()),
                 ..Default::default()
