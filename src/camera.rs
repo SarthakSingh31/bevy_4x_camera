@@ -81,6 +81,7 @@ fn camera_rig_movement(
     mouse_wheel_events: Res<Events<MouseWheel>>,
     mut rig_query: Query<(&mut Transform, &mut CameraRig, &Children)>,
     mut camera_query: Query<&mut Transform, With<Camera>>,
+    mut follow_query: Query<&mut CameraRigFollow>
 ) {
     for (mut rig_transform, mut rig, children) in rig_query.iter_mut() {
         let mut move_to_rig = if let Some(trans) = rig.move_to.0 {
@@ -89,23 +90,29 @@ fn camera_rig_movement(
             *rig_transform
         };
 
+        let mut translated = false;
         let move_sensitivity = rig_transform.translation.y *
             rig.keyboard.move_sensitivity.0 +
             rig.keyboard.move_sensitivity.1;
         // Rig Keyboard Movement
         if rig.keyboard.forward.iter().any(|key| keyboard_input.pressed(*key)) {
             move_to_rig.translation += rig_transform.rotation * Vec3::unit_x() * move_sensitivity;
+            translated = true;
         }
         if rig.keyboard.backward.iter().any(|key| keyboard_input.pressed(*key)) {
             move_to_rig.translation -= rig_transform.rotation * Vec3::unit_x() * move_sensitivity;
+            translated = true;
         }
         if rig.keyboard.right.iter().any(|key| keyboard_input.pressed(*key)) {
             move_to_rig.translation += rig_transform.rotation * Vec3::unit_z() * move_sensitivity;
+            translated = true;
         }
         if rig.keyboard.left.iter().any(|key| keyboard_input.pressed(*key)) {
             move_to_rig.translation -= rig_transform.rotation * Vec3::unit_z() * move_sensitivity;
+            translated = true;
         }
-        // Keyboard Rotation
+
+        // Rig Keyboard Rotation
         if rig.keyboard.counter_clockwise.iter().any(|key| keyboard_input.pressed(*key)) {
             move_to_rig.rotate(Quat::from_rotation_y(rig.keyboard.rotate_sensitivity));
         }
@@ -125,6 +132,13 @@ fn camera_rig_movement(
                     rig.mouse.drag_sensitivity.0 +
                     rig.mouse.drag_sensitivity.1;
                 move_to_rig.translation += rig_transform.rotation * Vec3::new(event.delta.y, 0., - event.delta.x) * drag_sensitivity;
+                translated = true;
+            }
+        }
+
+        if translated {
+            for mut followable in follow_query.iter_mut() {
+                followable.0 = false;
             }
         }
 
@@ -199,7 +213,8 @@ pub struct StrategyCameraPlugin;
 
 impl Plugin for StrategyCameraPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(camera_rig_movement.system())
+        app
+            .add_system(camera_rig_movement.system())
             .add_system(camera_rig_follow.system());
     }
 }
@@ -207,18 +222,24 @@ impl Plugin for StrategyCameraPlugin {
 pub struct CameraRigFollow(pub bool);
 
 fn camera_rig_follow(
-    mut query_self: Query<&mut Transform, With<CameraRig>>,
-    mut query_follow: Query<(&mut Transform, &CameraRigFollow), Changed<Transform>>
+    time: Res<Time>,
+    mut rig_query: Query<(&mut Transform, &mut CameraRig)>,
+    mut follow_query: Query<(&mut Transform, &CameraRigFollow), Changed<Transform>>
 ) {
-    for (follow_transform, follow) in query_follow.iter_mut() {
+    for (follow_transform, follow) in follow_query.iter_mut() {
         if follow.0 {
-            for mut transform in query_self.iter_mut() {
+            for (mut transform, mut rig) in rig_query.iter_mut() {
                 if follow_transform.translation != transform.translation {
-                    // if follow_transform.translation.distance(transform.translation).abs() > 1. {
-                    //     transform.translation = transform.translation.lerp(follow_transform.translation, time.delta().as_micros() as f32 / 50000.);
-                    // } else {
+                    if follow_transform.translation.distance(transform.translation).abs() > 0.005 {
+                        transform.translation = transform.translation.lerp(follow_transform.translation, time.delta().as_micros() as f32 / 100000.);
+                    } else {
                         transform.translation = follow_transform.translation;
-                    // }
+                    }
+                }
+
+                // Also update the rig translation
+                if let Some(mut rig_transform) = rig.move_to.0.as_mut() {
+                    rig_transform.translation = transform.translation;
                 }
             }
         }

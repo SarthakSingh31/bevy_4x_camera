@@ -87,7 +87,6 @@ fn moving_car(time: Res<Time>, mut query: Query<(&mut Transform, &mut MovingCar)
 fn selectable_car(mut query: Query<(&InteractableMesh, &mut CameraRigFollow)>) {
     for (interactable, mut follow) in query.iter_mut() {
         if let Ok(bevy_mod_picking::MouseDownEvents::MouseJustPressed) = interactable.mouse_down_event(&Default::default(), MouseButton::Left) {
-            println!("Got Click");
             follow.0 = true;
         }
     }
