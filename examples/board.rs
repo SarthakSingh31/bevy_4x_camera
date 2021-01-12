@@ -1,7 +1,51 @@
-use bevy::prelude::*;
-use bevy_mod_picking::{InteractableMesh, PickableMesh};
+use bevy::{prelude::*, render::camera::PerspectiveProjection};
+use bevy_4x_camera::{CameraRigBundle, CameraRigFollow, FourXCameraPlugin};
+use bevy_mod_picking::{
+    PickableMesh,
+    PickingPlugin,
+    PickSource,
+    InteractableMesh,
+    InteractablePickingPlugin,
+};
 use rand::prelude::*;
-use crate::camera::CameraRigFollow;
+
+fn main() {
+    App::build()
+        .add_resource(Msaa { samples: 4 })
+        .add_plugins(DefaultPlugins)
+        .add_plugin(BoardPlugin)
+        .add_plugin(FourXCameraPlugin)
+        .add_plugin(PickingPlugin)
+        .add_plugin(InteractablePickingPlugin)
+        .add_startup_system(camera_and_lights.system())
+        .run();
+}
+
+fn camera_and_lights(
+    commands: &mut Commands
+) {
+    commands
+        // light
+        .spawn(LightBundle {
+            transform: Transform::from_translation(Vec3::new(0.0, 50.0, 0.0)),
+            ..Default::default()
+        })
+        .spawn(CameraRigBundle::default())
+        // camera
+        .with_children(|cb| {
+            cb.spawn(
+                Camera3dBundle {
+                perspective_projection: PerspectiveProjection {
+                    fov: 0.1,
+                    ..Default::default()
+                },
+                transform: Transform::from_translation(Vec3::new(-20.0, 20., 0.0))
+                    .looking_at(Vec3::zero(), Vec3::unit_y()),
+                ..Default::default()
+            })
+            .with(PickSource::default());
+        });
+}
 
 pub struct BoardPlugin;
 
