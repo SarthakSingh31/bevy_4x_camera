@@ -33,8 +33,7 @@ fn camera_and_lights(
         .spawn(CameraRigBundle::default())
         // camera
         .with_children(|cb| {
-            cb.spawn(
-                Camera3dBundle {
+            cb.spawn(Camera3dBundle {
                 perspective_projection: PerspectiveProjection {
                     fov: 0.1,
                     ..Default::default()
