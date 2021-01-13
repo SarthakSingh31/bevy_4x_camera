@@ -22,11 +22,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    commands: &mut Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+fn setup(commands: &mut Commands) {
     commands
         // camera
         .spawn(CameraRigBundle::default())
