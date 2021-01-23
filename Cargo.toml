@@ -1,6 +1,6 @@
 [package]
 name = "bevy_4x_camera"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Sarthak Singh <ss269@uw.edu>"]
 edition = "2018"
 description = "A 4X style camera for bevy"

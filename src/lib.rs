@@ -5,16 +5,16 @@ use bevy::{
 };
 
 pub struct KeyboardConf {
-    forward: Box<[KeyCode]>,
-    backward: Box<[KeyCode]>,
-    left: Box<[KeyCode]>,
-    right: Box<[KeyCode]>,
+    pub forward: Box<[KeyCode]>,
+    pub backward: Box<[KeyCode]>,
+    pub left: Box<[KeyCode]>,
+    pub right: Box<[KeyCode]>,
     /// sensitivity is calcualted by mx + c where (m: f32, c: f32)
     /// and x is the camera distance
-    move_sensitivity: (f32, f32),
-    clockwise: Box<[KeyCode]>,
-    counter_clockwise: Box<[KeyCode]>,
-    rotate_sensitivity: f32,
+    pub move_sensitivity: (f32, f32),
+    pub clockwise: Box<[KeyCode]>,
+    pub counter_clockwise: Box<[KeyCode]>,
+    pub rotate_sensitivity: f32,
 }
 
 impl Default for KeyboardConf {
@@ -33,13 +33,13 @@ impl Default for KeyboardConf {
 }
 
 pub struct MouseConf {
-    rotate: MouseButton,
-    rotate_sensitivity: f32,
-    drag: MouseButton,
+    pub rotate: MouseButton,
+    pub rotate_sensitivity: f32,
+    pub drag: MouseButton,
     /// sensitivity is calcualted by mx + c where (m: f32, c: f32)
     /// and x is the camera distance
-    drag_sensitivity: (f32, f32),
-    zoom_sensitivity: f32,
+    pub drag_sensitivity: (f32, f32),
+    pub zoom_sensitivity: f32,
 }
 
 impl Default for MouseConf {
