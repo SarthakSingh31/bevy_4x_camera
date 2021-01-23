@@ -48,4 +48,4 @@ fn setup(commands: &mut Commands) {
 
 | Bevy Version | `bevy_4x_camera` Version |
 | ------------ | ------------------------ |
-| `0.4.0`      | `0.1.0`                  |
+| `0.4.0`      | `0.1.*`                  |
