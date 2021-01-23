@@ -61,6 +61,7 @@ pub struct CameraRig {
     pub mouse: MouseConf,
     // Transforms for (Rig, Camera)
     pub move_to: (Option<Transform>, Option<Transform>),
+    pub disable: bool,
 }
 
 #[derive(Bundle, Default)]
@@ -88,6 +89,8 @@ fn camera_rig_movement(
     mut follow_query: Query<&mut CameraRigFollow>,
 ) {
     for (mut rig_transform, mut rig, children) in rig_query.iter_mut() {
+        if rig.disable { continue; }
+        
         let mut move_to_rig = if let Some(trans) = rig.move_to.0 {
             trans
         } else {
