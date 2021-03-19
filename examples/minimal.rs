@@ -3,7 +3,7 @@ use bevy_4x_camera::{CameraRigBundle, FourXCameraPlugin};
 
 fn main() {
     App::build()
-        .add_resource(Msaa { samples: 4 })
+        .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(FourXCameraPlugin)
         .add_startup_system(setup.system())
@@ -12,7 +12,7 @@ fn main() {
 
 /// set up a simple 3D scene
 fn setup(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -39,13 +39,13 @@ fn setup(
         // camera
         .spawn(CameraRigBundle::default())
         .with_children(|cb| {
-            cb.spawn(Camera3dBundle {
+            cb.spawn(PerspectiveCameraBundle {
                 perspective_projection: PerspectiveProjection {
                     fov: 0.1,
                     ..Default::default()
                 },
                 transform: Transform::from_translation(Vec3::new(-20.0, 20., 0.0))
-                    .looking_at(Vec3::zero(), Vec3::unit_y()),
+                    .looking_at(Vec3::ZERO, Vec3::Y),
                 ..Default::default()
             });
         });
