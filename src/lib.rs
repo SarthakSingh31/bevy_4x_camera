@@ -257,6 +257,8 @@ fn camera_rig_movement(
                     } else {
                         transform.translation = move_to_camera.translation;
                     }
+                } else {
+                    rig.move_to.0 = None;
                 }
                 if move_to_camera.rotation != transform.rotation {
                     if !move_to_camera
@@ -270,6 +272,8 @@ fn camera_rig_movement(
                     } else {
                         transform.rotation = move_to_camera.rotation;
                     }
+                } else {
+                    rig.move_to.1 = None;
                 }
             }
         }
