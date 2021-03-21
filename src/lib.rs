@@ -1,8 +1,34 @@
 use bevy::{
+    ecs::schedule::ReportExecutionOrderAmbiguities,
     input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
     render::camera::Camera,
 };
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+pub enum CameraSystem {
+    CameraRigMovement,
+    CameraRigFollow,
+}
+
+pub struct FourXCameraPlugin;
+
+impl Plugin for FourXCameraPlugin {
+    fn build(&self, app: &mut AppBuilder) {
+        app.insert_resource(ReportExecutionOrderAmbiguities)
+            .add_system(
+                camera_rig_movement
+                    .system()
+                    .label(CameraSystem::CameraRigMovement),
+            )
+            .add_system(
+                camera_rig_follow
+                    .system()
+                    .label(CameraSystem::CameraRigFollow)
+                    .after(CameraSystem::CameraRigMovement),
+            );
+    }
+}
 
 pub struct KeyboardConf {
     pub forward: Box<[KeyCode]>,
@@ -324,14 +350,5 @@ fn camera_rig_follow(
                 rig_transform.translation = transform.translation;
             }
         }
-    }
-}
-
-pub struct FourXCameraPlugin;
-
-impl Plugin for FourXCameraPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system(camera_rig_movement.system())
-            .add_system(camera_rig_follow.system());
     }
 }
