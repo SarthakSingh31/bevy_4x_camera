@@ -1,8 +1,12 @@
-use bevy::{prelude::*, render::camera::PerspectiveProjection};
+use bevy::{
+    ecs::schedule::ReportExecutionOrderAmbiguities, prelude::*,
+    render::camera::PerspectiveProjection,
+};
 use bevy_4x_camera::{CameraRigBundle, FourXCameraPlugin};
 
 fn main() {
     App::build()
+        .insert_resource(ReportExecutionOrderAmbiguities)
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(FourXCameraPlugin)

@@ -1,4 +1,7 @@
-use bevy::{prelude::*, render::camera::PerspectiveProjection};
+use bevy::{
+    ecs::schedule::ReportExecutionOrderAmbiguities, prelude::*,
+    render::camera::PerspectiveProjection,
+};
 use bevy_4x_camera::{CameraRigBundle, CameraRigFollow, FourXCameraPlugin};
 use bevy_mod_picking::{
     self, InteractablePickingPlugin, PickableMesh, PickingCameraBundle, PickingPlugin,
@@ -44,7 +47,8 @@ pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(board.system())
+        app.insert_resource(ReportExecutionOrderAmbiguities)
+            .add_startup_system(board.system())
             .add_system(moving_car.system())
             .add_system(selectable_car.system());
     }

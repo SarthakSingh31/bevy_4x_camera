@@ -15,18 +15,17 @@ pub struct FourXCameraPlugin;
 
 impl Plugin for FourXCameraPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.insert_resource(ReportExecutionOrderAmbiguities)
-            .add_system(
-                camera_rig_movement
-                    .system()
-                    .label(CameraSystem::CameraRigMovement),
-            )
-            .add_system(
-                camera_rig_follow
-                    .system()
-                    .label(CameraSystem::CameraRigFollow)
-                    .after(CameraSystem::CameraRigMovement),
-            );
+        app.add_system(
+            camera_rig_movement
+                .system()
+                .label(CameraSystem::CameraRigMovement),
+        )
+        .add_system(
+            camera_rig_follow
+                .system()
+                .label(CameraSystem::CameraRigFollow)
+                .after(CameraSystem::CameraRigMovement),
+        );
     }
 }
 
