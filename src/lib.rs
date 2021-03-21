@@ -202,8 +202,6 @@ fn camera_rig_movement(
             } else {
                 rig_transform.translation = move_to_rig.translation;
             }
-        } else {
-            rig.move_to.0 = None;
         }
         if move_to_rig.rotation != rig_transform.rotation {
             if !move_to_rig
@@ -217,8 +215,6 @@ fn camera_rig_movement(
             } else {
                 rig_transform.rotation = move_to_rig.rotation;
             }
-        } else {
-            rig.move_to.1 = None;
         }
         for child in children.iter() {
             if let Ok(mut transform) = rig_cam_query.q1_mut().get_mut(*child) {
