@@ -279,7 +279,9 @@ fn camera_rig_movement(
         }
 
         if let Ok(mut transform) = rig_cam_query.q0_mut().get_mut(entity) {
-            *transform = rig_transform;
+            if *transform != rig_transform {
+                *transform = rig_transform;
+            }
         }
     }
 }
