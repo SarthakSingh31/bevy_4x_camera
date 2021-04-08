@@ -12,7 +12,8 @@ repository = "https://github.com/SarthakSingh31/bevy_4x_camera"
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", branch = "main" }
+# bevy = "0.5"
 
 [dev-dependencies]
-bevy_mod_picking = { git = "https://github.com/aevyrie/bevy_mod_picking" }
+bevy_mod_picking = { git = "https://github.com/aevyrie/bevy_mod_picking", branch = "master" }
 rand = "0.8"

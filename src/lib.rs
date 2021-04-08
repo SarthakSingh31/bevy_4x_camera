@@ -73,7 +73,7 @@ impl Default for MouseConf {
             rotate_sensitivity: std::f32::consts::PI / 1000.,
             drag: MouseButton::Left,
             drag_sensitivity: (1., std::f32::consts::PI / 1000.),
-            zoom_sensitivity: 5.,
+            zoom_sensitivity: 1.,
         }
     }
 }
