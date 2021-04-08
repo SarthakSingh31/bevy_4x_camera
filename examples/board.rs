@@ -1,13 +1,16 @@
-use bevy::{prelude::*, render::camera::PerspectiveProjection};
+use bevy::{
+    ecs::schedule::ReportExecutionOrderAmbiguities, prelude::*,
+    render::camera::PerspectiveProjection,
+};
 use bevy_4x_camera::{CameraRigBundle, CameraRigFollow, FourXCameraPlugin};
 use bevy_mod_picking::{
-    InteractableMesh, InteractablePickingPlugin, PickSource, PickableMesh, PickingPlugin,
+    self, InteractablePickingPlugin, PickableMesh, PickingCameraBundle, PickingPlugin,
 };
 use rand::prelude::*;
 
 fn main() {
     App::build()
-        .add_resource(Msaa { samples: 4 })
+        .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(BoardPlugin)
         .add_plugin(FourXCameraPlugin)
@@ -17,7 +20,7 @@ fn main() {
         .run();
 }
 
-fn camera_and_lights(commands: &mut Commands) {
+fn camera_and_lights(mut commands: Commands) {
     commands
         // light
         .spawn(LightBundle {
@@ -27,16 +30,16 @@ fn camera_and_lights(commands: &mut Commands) {
         .spawn(CameraRigBundle::default())
         // camera
         .with_children(|cb| {
-            cb.spawn(Camera3dBundle {
+            cb.spawn(PerspectiveCameraBundle {
                 perspective_projection: PerspectiveProjection {
                     fov: 0.1,
                     ..Default::default()
                 },
                 transform: Transform::from_translation(Vec3::new(-20.0, 20., 0.0))
-                    .looking_at(Vec3::zero(), Vec3::unit_y()),
+                    .looking_at(Vec3::ZERO, Vec3::Y),
                 ..Default::default()
             })
-            .with(PickSource::default());
+            .with(PickingCameraBundle::default());
         });
 }
 
@@ -44,14 +47,15 @@ pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(board.system())
+        app.insert_resource(ReportExecutionOrderAmbiguities)
+            .add_startup_system(board.system())
             .add_system(moving_car.system())
             .add_system(selectable_car.system());
     }
 }
 
 fn board(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -96,12 +100,12 @@ fn board(
             ..Default::default()
         })
         .with(MovingCar {
-            direction: Vec3::unit_x(),
+            direction: Vec3::X,
             speed: 1.,
         })
         .with(CameraRigFollow(false))
         .with(PickableMesh::default())
-        .with(InteractableMesh::default());
+        .with(Interaction::default());
 }
 
 struct MovingCar {
@@ -120,11 +124,9 @@ fn moving_car(time: Res<Time>, mut query: Query<(&mut Transform, &mut MovingCar)
     }
 }
 
-fn selectable_car(mut query: Query<(&InteractableMesh, &mut CameraRigFollow)>) {
+fn selectable_car(mut query: Query<(&Interaction, &mut CameraRigFollow)>) {
     for (interactable, mut follow) in query.iter_mut() {
-        if let Ok(bevy_mod_picking::MouseDownEvents::MouseJustPressed) =
-            interactable.mouse_down_event(&Default::default(), MouseButton::Left)
-        {
+        if let Interaction::Clicked = interactable {
             follow.0 = true;
         }
     }
