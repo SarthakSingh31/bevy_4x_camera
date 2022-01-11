@@ -5,7 +5,7 @@ use bevy::{
 use bevy_4x_camera::{CameraRigBundle, FourXCameraPlugin};
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(ReportExecutionOrderAmbiguities)
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
@@ -34,7 +34,7 @@ fn setup(
         ..Default::default()
     });
     // light
-    commands.spawn_bundle(LightBundle {
+    commands.spawn_bundle(PointLightBundle {
         transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
         ..Default::default()
     });

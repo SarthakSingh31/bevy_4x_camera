@@ -2,7 +2,7 @@
 name = "bevy_4x_camera"
 version = "0.1.2"
 authors = ["Sarthak Singh <ss269@uw.edu>"]
-edition = "2018"
+edition = "2021"
 description = "A 4X style camera for bevy"
 homepage = "https://github.com/SarthakSingh31/bevy_4x_camera"
 keywords = ["game", "gamedev", "camera", "bevy"]
@@ -11,8 +11,8 @@ readme = "README.md"
 repository = "https://github.com/SarthakSingh31/bevy_4x_camera"
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", branch = "main" }
-# bevy = "0.5"
+#bevy = "{ git = "https://github.com/bevyengine/bevy", branch = "main" }"
+bevy = "0.6"
 
 [dev-dependencies]
 bevy_mod_picking = { git = "https://github.com/aevyrie/bevy_mod_picking", branch = "master" }

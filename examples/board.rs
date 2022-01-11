@@ -9,7 +9,7 @@ use bevy_mod_picking::{
 use rand::prelude::*;
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(BoardPlugin)
@@ -22,7 +22,7 @@ fn main() {
 
 fn camera_and_lights(mut commands: Commands) {
     // light
-    commands.spawn_bundle(LightBundle {
+    commands.spawn_bundle(PointLightBundle {
         transform: Transform::from_translation(Vec3::new(0.0, 50.0, 0.0)),
         ..Default::default()
     });
@@ -38,14 +38,14 @@ fn camera_and_lights(mut commands: Commands) {
                     .looking_at(Vec3::ZERO, Vec3::Y),
                 ..Default::default()
             })
-            .insert(PickingCameraBundle::default());
+            .insert_bundle(PickingCameraBundle::default());
         });
 }
 
 pub struct BoardPlugin;
 
 impl Plugin for BoardPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.insert_resource(ReportExecutionOrderAmbiguities)
             .add_startup_system(board.system())
             .add_system(moving_car.system())
@@ -105,7 +105,7 @@ fn board(
         .insert(PickableMesh::default())
         .insert(Interaction::default());
 }
-
+#[derive(Component)]
 struct MovingCar {
     direction: Vec3,
     speed: f32,
