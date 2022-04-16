@@ -100,9 +100,9 @@ fn camera_rig_movement(
     mut mouse_motion_events: EventReader<MouseMotion>,
     mut mouse_wheel_events: EventReader<MouseWheel>,
     mut camera_rig_query: Query<(&mut CameraRig, &Children, Entity)>,
-    mut rig_cam_query: QuerySet<(
-        QueryState<&mut Transform, With<CameraRig>>,
-        QueryState<&mut Transform, With<Camera>>,
+    mut rig_cam_query: ParamSet<(
+        Query<&mut Transform, With<CameraRig>>,
+        Query<&mut Transform, With<Camera>>,
     )>,
     mut follow_query: Query<&mut CameraRigFollow>,
 ) {
@@ -111,7 +111,7 @@ fn camera_rig_movement(
             continue;
         }
 
-        let mut rig_transform = if let Ok(transform) = rig_cam_query.q0().get_mut(entity) {
+        let mut rig_transform = if let Ok(transform) = rig_cam_query.p0().get_mut(entity) {
             transform.clone()
         } else {
             panic!("Rig missing a transform")
@@ -239,7 +239,7 @@ fn camera_rig_movement(
             }
         }
         for child in children.iter() {
-            if let Ok(mut transform) = rig_cam_query.q1().get_mut(*child) {
+            if let Ok(mut transform) = rig_cam_query.p1().get_mut(*child) {
                 let mut move_to_camera = if let Some(trans) = rig.move_to.1 {
                     trans
                 } else {
@@ -300,7 +300,7 @@ fn camera_rig_movement(
             }
         }
 
-        if let Ok(mut transform) = rig_cam_query.q0().get_mut(entity) {
+        if let Ok(mut transform) = rig_cam_query.p0().get_mut(entity) {
             if *transform != rig_transform {
                 *transform = rig_transform;
             }
@@ -312,19 +312,19 @@ pub struct CameraRigFollow(pub bool);
 
 fn camera_rig_follow(
     time: Res<Time>,
-    mut rig_query: QuerySet<(
-        QueryState<(&mut Transform, &mut CameraRig)>,
-        QueryState<(&Transform, &CameraRigFollow), Changed<Transform>>,
+    mut rig_query: ParamSet<(
+        Query<(&mut Transform, &mut CameraRig)>,
+        Query<(&Transform, &CameraRigFollow), Changed<Transform>>,
     )>,
 ) {
     let (follow_transform, follow) : (Transform, CameraRigFollow) =
-        if let Some((follow_transform, follow)) = rig_query.q1().iter_mut().last() {
+        if let Some((follow_transform, follow)) = rig_query.p1().iter_mut().last() {
             (follow_transform.clone(), follow.clone())
         } else {
             return;
         };
     if follow.0 {
-        for (mut transform, mut rig) in rig_query.q0().iter_mut() {
+        for (mut transform, mut rig) in rig_query.p0().iter_mut() {
             if follow_transform.translation != transform.translation {
                 if follow_transform
                     .translation
